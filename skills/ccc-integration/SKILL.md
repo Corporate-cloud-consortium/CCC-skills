@@ -149,10 +149,33 @@ The collection lives on the platform canister and follows the ICRC-7 standard
 (verified rendering natively in Oisy wallet 2.1.0). Query the holder's tokens
 and map IDs to tiers with the table above.
 
-> VERIFY BEFORE SHIPPING: confirm the exact ICRC-7 method set exposed by the
-> canister (e.g. `icrc7_tokens_of`, `icrc7_owner_of`, `icrc7_balance_of`) by
-> loading the live Candid interface:
-> https://a4gq6-oaaaa-aaaab-qaa4q-cai.raw.icp0.io/?id=ipchn-lqaaa-aaaam-qizkq-cai
+Confirmed ICRC-7 interface, read from the live canister's `candid:service`
+metadata (2026-06-11). All reads are anonymous query calls;
+`icrc7_transfer` is the only update method:
+
+```candid
+icrc7_name: () -> (text) query;
+icrc7_symbol: () -> (text) query;
+icrc7_total_supply: () -> (nat) query;
+icrc7_supply_cap: () -> (opt nat) query;
+icrc7_collection_metadata: () -> (vec record { text; Value }) query;
+icrc7_balance_of: (accounts: vec Account) -> (vec nat) query;
+icrc7_owner_of: (tokenIds: vec nat) -> (vec opt Account) query;
+icrc7_token_metadata: (tokenIds: vec nat) -> (vec opt vec record { text; Value }) query;
+icrc7_tokens: (prev: opt nat, take: opt nat) -> (vec nat) query;
+icrc7_tokens_of: (account: Account, prev: opt nat, take: opt nat) -> (vec nat) query;
+icrc7_transfer: (args: vec TransferArg) -> (vec opt TransferResult);
+```
+
+Example - fetch a principal's held token IDs (anonymous, paginated;
+`null, null` returns from the start with the default page size). Verified
+live: the admin principal currently holds 45 of the 50 tokens:
+
+```bash
+dfx canister call ipchn-lqaaa-aaaam-qizkq-cai icrc7_tokens_of \
+  '(record { owner = principal "vvqwe-3pf63-up7r5-mmxwp-fkzbn-hrifs-ukgvd-z5qm4-cg5r2-4hmx3-6ae"; subaccount = null }, null, null)' \
+  --network ic
+```
 
 ```motoko
 // Sketch: tier from held token IDs (Motoko, mo:core)
